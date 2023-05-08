@@ -7,8 +7,7 @@ public class Specialty {
     public Specialty() {
     }
 
-    public Specialty(long id, String specialtyName) {
-        this.id = id;
+    public Specialty(String specialtyName) {
         this.specialtyName = specialtyName;
     }
 
@@ -30,9 +29,6 @@ public class Specialty {
 
     @Override
     public String toString() {
-        return "Specialty{" +
-                "id=" + id +
-                ", specialtyName='" + specialtyName + '\'' +
-                '}';
+        return specialtyName;
     }
 }

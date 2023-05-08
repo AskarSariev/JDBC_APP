@@ -7,8 +7,7 @@ public class Skill {
     public Skill() {
     }
 
-    public Skill(long id, String skillName) {
-        this.id = id;
+    public Skill(String skillName) {
         this.skillName = skillName;
     }
 
@@ -30,9 +29,6 @@ public class Skill {
 
     @Override
     public String toString() {
-        return "Skill{" +
-                "id=" + id +
-                ", skillName='" + skillName + '\'' +
-                '}';
+        return skillName;
     }
 }

@@ -1,6 +1,7 @@
 package models;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Developer {
     private long id;
@@ -13,11 +14,22 @@ public class Developer {
     public Developer() {
     }
 
-    public Developer(long id, String firstName, String lastName, List<Skill> skills, Specialty specialty, Status status) {
+    public Developer(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+    public Developer(String firstName, String lastName, Specialty specialty, Status status) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.specialty = specialty;
+        this.status = status;
+    }
+
+    public Developer(long id, String firstName, String lastName, Specialty specialty, Status status) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.skills = skills;
         this.specialty = specialty;
         this.status = status;
     }
@@ -68,6 +80,19 @@ public class Developer {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Developer developer = (Developer) o;
+        return id == developer.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override
