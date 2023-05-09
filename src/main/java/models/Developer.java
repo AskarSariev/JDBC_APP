@@ -87,7 +87,7 @@ public class Developer {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Developer developer = (Developer) o;
-        return id == developer.id;
+        return this.id == developer.id;
     }
 
     @Override

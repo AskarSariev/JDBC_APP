@@ -43,12 +43,22 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
     }
 
     @Override
-    public void create(Specialty specialty) {
+    public long create(Specialty specialty) {
+        if (specialty.getSpecialtyName() == null || specialty.getSpecialtyName().equals("")) {
+            throw new RuntimeException("Specialty name shouldn't be null or empty");
+        }
+
+        long generatedId = -1;
         String create = "INSERT INTO specialties (name) VALUES (?)";
         preparedStatement = GettingConnectionAndStatement.getPreparedStatement(create);
         try {
             preparedStatement.setString(1, specialty.getSpecialtyName());
-            preparedStatement.execute();
+            preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                generatedId = generatedKeys.getLong(1);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -59,6 +69,7 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
                 throw new RuntimeException(e);
             }
         }
+        return generatedId;
     }
 
     @Override

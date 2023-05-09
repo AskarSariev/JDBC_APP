@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface GenericRepository<T, Long> {
     List<T> getAll();
-    void create(T t);
+    long create(T t);
     void update(T t);
     void deleteById(long id);
 

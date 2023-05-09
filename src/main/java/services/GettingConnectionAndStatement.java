@@ -26,7 +26,7 @@ public class GettingConnectionAndStatement {
         Connection connection = getConnection();
         PreparedStatement preparedStatement;
         try {
-            preparedStatement = connection.prepareStatement(sqlExpression);
+            preparedStatement = connection.prepareStatement(sqlExpression, Statement.RETURN_GENERATED_KEYS);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

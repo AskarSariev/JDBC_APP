@@ -17,7 +17,7 @@ public class JdbcDeveloperRepositoryImpl implements DeveloperRepository {
     public List<Developer> getAll() {
         List<Developer> developers = new ArrayList<>();
 
-        String selectAll = "SELECT developers.id, developers.first_name, developers.last_name, skills.name, specialties.name, developers.status " +
+        String select = "SELECT developers.id, developers.first_name, developers.last_name, skills.name, specialties.name, developers.status " +
                       "FROM developers " +
                       "LEFT OUTER JOIN developers_skills " +
                       "ON developers.id = developers_skills.developer_id " +
@@ -26,7 +26,7 @@ public class JdbcDeveloperRepositoryImpl implements DeveloperRepository {
                       "LEFT JOIN specialties " +
                       "ON developers.specialty_id = specialties.id";
 
-        preparedStatement = GettingConnectionAndStatement.getPreparedStatement(selectAll);
+        preparedStatement = GettingConnectionAndStatement.getPreparedStatement(select);
         try {
             ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -70,13 +70,25 @@ public class JdbcDeveloperRepositoryImpl implements DeveloperRepository {
     }
 
     @Override
-    public void create(Developer developer) {
+    public long create(Developer developer) {
+        if (developer.getFirstName() == null || developer.getLastName() == null
+            || developer.getFirstName().equals("") || developer.getLastName().equals("")) {
+            throw new RuntimeException("FirstName or LastName cannot be null or empty. Enter firstName or lastName correctly");
+        }
+
+        long generatedId = -1;
         String create = "INSERT INTO developers (first_name, last_name) VALUES (?, ?)";
         preparedStatement = GettingConnectionAndStatement.getPreparedStatement(create);
         try {
             preparedStatement.setString(1, developer.getFirstName());
             preparedStatement.setString(2, developer.getLastName());
-            preparedStatement.execute();
+            preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                generatedId = generatedKeys.getLong(1);
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -87,32 +99,59 @@ public class JdbcDeveloperRepositoryImpl implements DeveloperRepository {
                 throw new RuntimeException(e);
             }
         }
+        return generatedId;
     }
 
     @Override
     public void update(Developer updatedDeveloper) {
         Optional<Developer> foundDeveloper = getOneById(updatedDeveloper.getId());
         if (foundDeveloper.isPresent()) {
-            String update = "UPDATE developers " +
-                    "JOIN specialties ON developers.specialty_id = specialties.id " +
-                    "SET first_name = ?, last_name = ?, specialty_id = ?, status = ? " +
+
+            String update;
+            if (foundDeveloper.get().getSpecialty().getSpecialtyName() == null) {
+                update = "UPDATE developers " +
+                    "SET first_name = ?, last_name = ?, status = ? " +
                     "WHERE developers.id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(update);
-            try {
-                preparedStatement.setString(1, updatedDeveloper.getFirstName());
-                preparedStatement.setString(2, updatedDeveloper.getLastName());
-                preparedStatement.setLong(3, updatedDeveloper.getSpecialty().getId());
-                preparedStatement.setString(4, updatedDeveloper.getStatus().toString());
-                preparedStatement.setLong(5, updatedDeveloper.getId());
-                preparedStatement.execute();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            } finally {
+
+                preparedStatement = GettingConnectionAndStatement.getPreparedStatement(update);
                 try {
-                    preparedStatement.close();
-                    connection.close();
+                    preparedStatement.setString(1, updatedDeveloper.getFirstName());
+                    preparedStatement.setString(2, updatedDeveloper.getLastName());
+                    preparedStatement.setString(3, updatedDeveloper.getStatus().toString());
+                    preparedStatement.setLong(4, updatedDeveloper.getId());
+                    preparedStatement.executeUpdate();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    try {
+                        preparedStatement.close();
+                        connection.close();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            } else {
+                update = "UPDATE developers " +
+                        "JOIN specialties ON developers.specialty_id = specialties.id " +
+                        "SET first_name = ?, last_name = ?, specialty_id = ?, status = ? " +
+                        "WHERE developers.id = ?";
+                preparedStatement = GettingConnectionAndStatement.getPreparedStatement(update);
+                try {
+                    preparedStatement.setString(1, updatedDeveloper.getFirstName());
+                    preparedStatement.setString(2, updatedDeveloper.getLastName());
+                    preparedStatement.setLong(3, updatedDeveloper.getSpecialty().getId());
+                    preparedStatement.setString(4, updatedDeveloper.getStatus().toString());
+                    preparedStatement.setLong(5, updatedDeveloper.getId());
+                    preparedStatement.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    try {
+                        preparedStatement.close();
+                        connection.close();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         } else {
@@ -142,11 +181,17 @@ public class JdbcDeveloperRepositoryImpl implements DeveloperRepository {
                 }
             }
 
-            String deleteDeveloper = "DELETE developers FROM developers " +
-                    "JOIN specialties " +
-                    "ON developers.specialty_id = specialties.id " +
-                    "WHERE developers.id = ?";
+            String deleteDeveloper;
+            if (foundDeveloper.get().getSpecialty().getSpecialtyName() == null) {
+                deleteDeveloper = "DELETE FROM developers WHERE id = ?";
+            } else {
+                deleteDeveloper = "DELETE developers FROM developers " +
+                        "JOIN specialties " +
+                        "ON developers.specialty_id = specialties.id " +
+                        "WHERE developers.id = ?";
+            }
             preparedStatement = GettingConnectionAndStatement.getPreparedStatement(deleteDeveloper);
+
             try {
                 preparedStatement.setLong(1, id);
                 preparedStatement.executeUpdate();
@@ -210,6 +255,8 @@ public class JdbcDeveloperRepositoryImpl implements DeveloperRepository {
                     throw new RuntimeException(e);
                 }
             }
+        } else {
+            throw new RuntimeException("Developer with this ID not found");
         }
     }
 }

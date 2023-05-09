@@ -39,12 +39,22 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
     }
 
     @Override
-    public void create(Skill skill) {
+    public long create(Skill skill) {
+        if (skill.getSkillName() == null || skill.getSkillName().equals("")) {
+            throw new RuntimeException("Skill name shouldn't be null or empty");
+        }
+
+        long generatedId = -1;
         String create = "INSERT INTO skills (name) VALUES (?)";
         preparedStatement = GettingConnectionAndStatement.getPreparedStatement(create);
         try {
             preparedStatement.setString(1, skill.getSkillName());
-            preparedStatement.execute();
+            preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                generatedId = generatedKeys.getLong(1);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -55,6 +65,7 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
                 throw new RuntimeException(e);
             }
         }
+        return generatedId;
     }
 
     @Override
