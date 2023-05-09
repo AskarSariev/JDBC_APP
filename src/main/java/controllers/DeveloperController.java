@@ -6,10 +6,10 @@ import repositories.DeveloperRepository;
 
 import java.util.List;
 
-public class DevelopersSkillsController {
+public class DeveloperController {
     private final DeveloperRepository developerRepository;
 
-    public DevelopersSkillsController(DeveloperRepository developerRepository) {
+    public DeveloperController(DeveloperRepository developerRepository) {
         this.developerRepository = developerRepository;
     }
 
