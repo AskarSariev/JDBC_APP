@@ -14,24 +14,17 @@ public class Developer {
     public Developer() {
     }
 
-    public Developer(String firstName, String lastName) {
+    public Developer(String firstName, String lastName, List<Skill> skills, Specialty specialty, Status status) {
         this.firstName = firstName;
         this.lastName = lastName;
-    }
-
-    public Developer(String firstName, String lastName, Specialty specialty, Status status) {
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.skills = skills;
         this.specialty = specialty;
         this.status = status;
     }
 
-    public Developer(long id, String firstName, String lastName, Specialty specialty, Status status) {
+    public Developer(Long id, String firstName, String lastName, List<Skill> skills, Specialty specialty, Status status) {
+        this(firstName, lastName, skills, specialty, status);
         this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.specialty = specialty;
-        this.status = status;
     }
 
     public long getId() {

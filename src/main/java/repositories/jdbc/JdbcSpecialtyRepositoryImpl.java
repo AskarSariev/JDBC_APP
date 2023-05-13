@@ -1,10 +1,8 @@
-package services;
+package repositories.jdbc;
 
-import models.Skill;
 import models.Specialty;
 import repositories.SpecialtyRepository;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,16 +11,19 @@ import java.util.List;
 import java.util.Optional;
 
 public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
-    private Connection connection = GettingConnectionAndStatement.getConnection();
     private PreparedStatement preparedStatement;
 
     @Override
     public List<Specialty> getAll() {
         List<Specialty> specialties = new ArrayList<>();
+
         String selectAll = "SELECT * FROM specialties";
-        preparedStatement = GettingConnectionAndStatement.getPreparedStatement(selectAll);
+
+        preparedStatement = JdbcUtils.getPreparedStatement(selectAll);
+
         try {
             ResultSet resultSet = preparedStatement.executeQuery();
+
             while (resultSet.next()) {
                 Specialty specialty = new Specialty();
                 specialty.setId(resultSet.getInt("id"));
@@ -34,7 +35,6 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
         } finally {
             try {
                 preparedStatement.close();
-                connection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -43,41 +43,44 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
     }
 
     @Override
-    public long create(Specialty specialty) {
-        if (specialty.getSpecialtyName() == null || specialty.getSpecialtyName().equals("")) {
-            throw new RuntimeException("Specialty name shouldn't be null or empty");
-        }
+    public Long create(Specialty specialty) {
+        if (isPresentByName(specialty.getSpecialtyName())) {
+            return getOneByName(specialty.getSpecialtyName());
+        } else {
+            long id = -1;
 
-        long generatedId = -1;
-        String create = "INSERT INTO specialties (name) VALUES (?)";
-        preparedStatement = GettingConnectionAndStatement.getPreparedStatement(create);
-        try {
-            preparedStatement.setString(1, specialty.getSpecialtyName());
-            preparedStatement.executeUpdate();
+            String create = "INSERT INTO specialties (name) VALUES (?)";
 
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                generatedId = generatedKeys.getLong(1);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
+            preparedStatement = JdbcUtils.getPreparedStatement(create);
+
             try {
-                preparedStatement.close();
-                connection.close();
+                preparedStatement.setString(1, specialty.getSpecialtyName());
+                preparedStatement.executeUpdate();
+
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    id = generatedKeys.getLong(1);
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
+            } finally {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
+            return id;
         }
-        return generatedId;
     }
 
     @Override
     public void update(Specialty specialty) {
-        Optional<Specialty> foundSpecialty = getOneById(specialty.getId());
-        if (foundSpecialty.isPresent()) {
+        if (isPresentByName(specialty.getSpecialtyName())) {
             String update = "UPDATE specialties SET name = ? WHERE id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(update);
+
+            preparedStatement = JdbcUtils.getPreparedStatement(update);
+
             try {
                 preparedStatement.setString(1, specialty.getSpecialtyName());
                 preparedStatement.setLong(2, specialty.getId());
@@ -87,22 +90,22 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
             } finally {
                 try {
                     preparedStatement.close();
-                    connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
         } else {
-            throw new RuntimeException("Specialty with this ID not found");
+            throw new RuntimeException("This specialty with this ID not found");
         }
     }
 
     @Override
-    public void deleteById(long id) {
-        Optional<Specialty> foundSpecialty = getOneById(id);
-        if (foundSpecialty.isPresent()) {
+    public void deleteById(Long id) {
+        if (isPresentById(id)) {
             String deleteFromDevelopersTable = "UPDATE developers SET specialty_id = null WHERE specialty_id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(deleteFromDevelopersTable);
+
+            preparedStatement = JdbcUtils.getPreparedStatement(deleteFromDevelopersTable);
+
             try {
                 preparedStatement.setLong(1, id);
                 preparedStatement.executeUpdate();
@@ -111,14 +114,15 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
             } finally {
                 try {
                     preparedStatement.close();
-                    connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
 
             String delete = "DELETE specialties FROM specialties WHERE id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(delete);
+
+            preparedStatement = JdbcUtils.getPreparedStatement(delete);
+
             try {
                 preparedStatement.setLong(1, id);
                 preparedStatement.executeUpdate();
@@ -127,18 +131,32 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
             } finally {
                 try {
                     preparedStatement.close();
-                    connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
         } else {
-            throw new RuntimeException("Specialty with this ID not found");
+            throw new RuntimeException("This specialty with this ID not found");
         }
     }
 
-    @Override
-    public Optional<Specialty> getOneById(long id) {
-        return getAll().stream().filter(developer -> developer.getId() == id).findFirst();
+    private Long getOneByName(String name) {
+        return getAll().stream()
+                .filter(specialty -> specialty.getSpecialtyName().equals(name))
+                .findFirst().get().getId();
+    }
+
+    private boolean isPresentByName(String name) {
+        Optional<Specialty> foundSpecialty = getAll().stream()
+                .filter(skill -> skill.getSpecialtyName().equals(name))
+                .findFirst();
+        return foundSpecialty.isPresent();
+    }
+
+    private boolean isPresentById(long id) {
+        Optional<Specialty> foundSpecialty = getAll().stream()
+                .filter(specialty -> specialty.getId() == id)
+                .findFirst();
+        return foundSpecialty.isPresent();
     }
 }

@@ -1,36 +1,30 @@
 package controllers;
 
 import models.Specialty;
-import repositories.SpecialtyRepository;
+import services.SpecialtyService;
 
 import java.util.List;
 
 public class SpecialtyController {
-    private final SpecialtyRepository specialtyRepository;
+    private final SpecialtyService specialtyService;
 
-    public SpecialtyController(SpecialtyRepository specialtyRepository) {
-        this.specialtyRepository = specialtyRepository;
+    public SpecialtyController(SpecialtyService specialtyService) {
+        this.specialtyService = specialtyService;
     }
 
-    public List<Specialty> getAll() {
-        return specialtyRepository.getAll();
+    public List<Specialty> getAllSpecialties() {
+        return specialtyService.getAllSpecialties();
     }
 
-    public long create(Specialty specialty) {
-        return specialtyRepository.create(specialty);
+    public Long createSpecialty(Specialty specialty) {
+        return specialtyService.createSpecialty(specialty);
     }
 
-    public void update(Specialty specialty) {
-        specialtyRepository.update(specialty);
+    public void updateSpecialty(Specialty specialty) {
+        specialtyService.updateSpecialty(specialty);
     }
 
-    public void deleteById(long id) {
-        specialtyRepository.deleteById(id);
-    }
-
-    public Specialty getOneById(long id) {
-        return specialtyRepository.getOneById(id).orElseThrow(
-                () -> new RuntimeException("Specialty with this ID not found")
-        );
+    public void deleteSpecialtyById(long id) {
+        specialtyService.deleteSpecialtyById(id);
     }
 }

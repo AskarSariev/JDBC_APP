@@ -1,36 +1,30 @@
 package controllers;
 
 import models.Skill;
-import repositories.SkillRepository;
+import services.SkillService;
 
 import java.util.List;
 
 public class SkillController {
-    private final SkillRepository skillRepository;
+    private final SkillService skillService;
 
-    public SkillController(SkillRepository skillRepository) {
-        this.skillRepository = skillRepository;
+    public SkillController(SkillService skillService) {
+        this.skillService = skillService;
     }
 
-    public List<Skill> getAll() {
-        return skillRepository.getAll();
+    public List<Skill> getAllSkills() {
+        return skillService.getAllSkills();
     }
 
-    public long create(Skill skill) {
-        return skillRepository.create(skill);
+    public Long createSkill(Skill skill) {
+        return skillService.createSkill(skill);
     }
 
-    public void update(Skill skill) {
-        skillRepository.update(skill);
+    public void updateSkill(Skill skill) {
+        skillService.updateSkill(skill);
     }
 
-    public void deleteById(long id) {
-        skillRepository.deleteById(id);
-    }
-
-    public Skill getOneById(long id) {
-        return skillRepository.getOneById(id).orElseThrow(
-                () -> new RuntimeException("Skill with this ID not found")
-        );
+    public void deleteSkillById(long id) {
+        skillService.deleteSkillById(id);
     }
 }

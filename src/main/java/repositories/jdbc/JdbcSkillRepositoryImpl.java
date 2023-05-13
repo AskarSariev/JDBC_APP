@@ -1,24 +1,29 @@
-package services;
+package repositories.jdbc;
 
 import models.Skill;
 import repositories.SkillRepository;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class JdbcSkillRepositoryImpl implements SkillRepository {
-    private Connection connection = GettingConnectionAndStatement.getConnection();
+public class JdbcSkillRepositoryImpl implements SkillRepository { ;
     private PreparedStatement preparedStatement;
 
     @Override
     public List<Skill> getAll() {
         List<Skill> skills = new ArrayList<>();
+
         String selectAll = "SELECT * FROM skills";
-        preparedStatement = GettingConnectionAndStatement.getPreparedStatement(selectAll);
+
+        preparedStatement = JdbcUtils.getPreparedStatement(selectAll);
+
         try {
             ResultSet resultSet = preparedStatement.executeQuery();
+
             while (resultSet.next()) {
                 Skill skill = new Skill();
                 skill.setId(resultSet.getInt("id"));
@@ -30,7 +35,6 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
         } finally {
             try {
                 preparedStatement.close();
-                connection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -39,41 +43,44 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
     }
 
     @Override
-    public long create(Skill skill) {
-        if (skill.getSkillName() == null || skill.getSkillName().equals("")) {
-            throw new RuntimeException("Skill name shouldn't be null or empty");
-        }
+    public Long create(Skill skill) {
+        if (isPresentByName(skill.getSkillName())) {
+            return getOneByName(skill.getSkillName());
+        } else {
+            long id = -1;
 
-        long generatedId = -1;
-        String create = "INSERT INTO skills (name) VALUES (?)";
-        preparedStatement = GettingConnectionAndStatement.getPreparedStatement(create);
-        try {
-            preparedStatement.setString(1, skill.getSkillName());
-            preparedStatement.executeUpdate();
+            String create = "INSERT INTO skills (name) VALUES (?)";
 
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                generatedId = generatedKeys.getLong(1);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
+            preparedStatement = JdbcUtils.getPreparedStatement(create);
+
             try {
-                preparedStatement.close();
-                connection.close();
+                preparedStatement.setString(1, skill.getSkillName());
+                preparedStatement.executeUpdate();
+
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    id = generatedKeys.getLong(1);
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
+            } finally {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
+            return id;
         }
-        return generatedId;
     }
 
     @Override
     public void update(Skill skill) {
-        Optional<Skill> foundSkill = getOneById(skill.getId());
-        if (foundSkill.isPresent()) {
+        if (isPresentByName(skill.getSkillName())) {
             String update = "UPDATE skills SET name = ? WHERE id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(update);
+
+            preparedStatement = JdbcUtils.getPreparedStatement(update);
+
             try {
                 preparedStatement.setString(1, skill.getSkillName());
                 preparedStatement.setLong(2, skill.getId());
@@ -83,23 +90,21 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
             } finally {
                 try {
                     preparedStatement.close();
-                    connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
         } else {
-            throw new RuntimeException("Skill with this ID not found");
+            throw new RuntimeException("This skill with this ID not found");
         }
     }
 
     @Override
-    public void deleteById(long id) {
-        Optional<Skill> foundSkill = getOneById(id);
-        if (foundSkill.isPresent()) {
-            String deleteFromOuterTable = "DELETE developers_skills FROM developers_skills " +
-                    "WHERE skill_id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(deleteFromOuterTable);
+    public void deleteById(Long id) {
+        if (isPresentById(id)) {
+            String deleteFromOuterTable = "DELETE developers_skills FROM developers_skills WHERE skill_id = ?";
+
+            preparedStatement = JdbcUtils.getPreparedStatement(deleteFromOuterTable);
 
             try {
                 preparedStatement.setLong(1, id);
@@ -109,14 +114,15 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
             } finally {
                 try {
                     preparedStatement.close();
-                    connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
 
             String update = "DELETE skills FROM skills WHERE id = ?";
-            preparedStatement = GettingConnectionAndStatement.getPreparedStatement(update);
+
+            preparedStatement = JdbcUtils.getPreparedStatement(update);
+
             try {
                 preparedStatement.setLong(1, id);
                 preparedStatement.executeUpdate();
@@ -125,18 +131,33 @@ public class JdbcSkillRepositoryImpl implements SkillRepository {
             } finally {
                 try {
                     preparedStatement.close();
-                    connection.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
         } else {
-            throw new RuntimeException("Skill with this ID not found");
+            throw new RuntimeException("This skill with this ID not found");
         }
     }
 
-    @Override
-    public Optional<Skill> getOneById(long id) {
-        return getAll().stream().filter(skill -> skill.getId() == id).findFirst();
+    private Long getOneByName(String name) {
+        return getAll().stream()
+                .filter(skill -> skill.getSkillName().equals(name))
+                .findFirst()
+                .get().getId();
+    }
+
+    private boolean isPresentByName(String name) {
+        Optional<Skill> foundSkill = getAll().stream()
+                .filter(skill -> skill.getSkillName().equals(name))
+                .findFirst();
+        return foundSkill.isPresent();
+    }
+
+    private boolean isPresentById(long id) {
+        Optional<Skill> foundSkill = getAll().stream()
+                .filter(skill -> skill.getId() == id)
+                .findFirst();
+        return foundSkill.isPresent();
     }
 }

@@ -1,45 +1,30 @@
 package controllers;
 
 import models.Developer;
-import models.Status;
-import repositories.DeveloperRepository;
+import services.DeveloperService;
 
 import java.util.List;
 
 public class DeveloperController {
-    private final DeveloperRepository developerRepository;
+    private final DeveloperService developerService;
 
-    public DeveloperController(DeveloperRepository developerRepository) {
-        this.developerRepository = developerRepository;
+    public DeveloperController(DeveloperService developerService) {
+        this.developerService = developerService;
     }
 
-    public List<Developer> getAll() {
-        return developerRepository.getAll();
+    public List<Developer> getAllDevelopers() {
+        return developerService.getAllDevelopers();
     }
 
-    public long create(Developer developer) {
-        return developerRepository.create(developer);
+    public Long createDeveloper(Developer developer) {
+        return developerService.createDeveloper(developer);
     }
 
-    public void update(Developer developer) {
-        developerRepository.update(developer);
+    public void updateDeveloper(Developer developer) {
+        developerService.updateDeveloper(developer);
     }
 
-    public void deleteById(long id) {
-        developerRepository.deleteById(id);
-    }
-
-    public Developer getOneById(long id) {
-        return developerRepository.getOneById(id).orElseThrow(
-                () -> new RuntimeException("Developer with this ID not found")
-        );
-    }
-
-    public void addSpecialtyToDeveloper(long developerId, long specialtyId) {
-        developerRepository.addSpecialtyToDeveloper(developerId, specialtyId);
-    }
-
-    public void changeStatus(long id, Status newStatus) {
-        developerRepository.changeStatus(id, newStatus);
+    public void deleteDeveloperById(long id) {
+        developerService.deleteDeveloperById(id);
     }
 }
