@@ -1,15 +1,32 @@
 package models;
 
+import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
+@Entity
+@Table(name = "skills")
 public class Skill {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private long id;
+
+    @Column(name = "name", unique = true)
     private String skillName;
+
+    @ManyToMany(mappedBy = "skills", fetch = FetchType.LAZY)
+    private List<Developer> developers;
 
     public Skill() {
     }
 
     public Skill(String skillName) {
+        this.skillName = skillName;
+    }
+
+    public Skill(long id, String skillName) {
+        this.id = id;
         this.skillName = skillName;
     }
 

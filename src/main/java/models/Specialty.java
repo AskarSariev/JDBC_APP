@@ -1,10 +1,22 @@
 package models;
 
+import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
+@Entity
+@Table(name = "specialties")
 public class Specialty {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private long id;
+
+    @Column(name = "name", unique = true)
     private String specialtyName;
+
+    @OneToMany(mappedBy = "specialty", fetch = FetchType.LAZY)
+    private List<Developer> developers;
 
     public Specialty() {
     }

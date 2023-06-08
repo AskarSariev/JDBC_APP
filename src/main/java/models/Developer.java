@@ -1,14 +1,38 @@
 package models;
 
+
+import javax.persistence.*;
 import java.util.List;
 import java.util.Objects;
 
+@Entity
+@Table(name = "developers")
 public class Developer {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private long id;
+
+    @Column(name = "first_name")
     private String firstName;
+
+    @Column(name = "last_name")
     private String lastName;
+
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "developers_skills",
+            joinColumns = @JoinColumn(name = "developer_id"),
+            inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
     private List<Skill> skills;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "specialty_id", unique = true)
     private Specialty specialty;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     public Developer() {

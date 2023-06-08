@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:mysql://localhost:3306/developer_db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="developer_db@localhost [2]" uuid="1f9b582c-0faa-40da-a7bf-5fc5bc6ee3a9">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/developer_db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
